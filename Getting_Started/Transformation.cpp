@@ -1,6 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "/MyOpenGL/stb_image.h"
 #include "shader.h"
 
@@ -35,14 +37,14 @@ int main()
 		return -1;
 	}
 
-	Shader ourShader("/MyOpenGL/GLSL/Texture_VertexShader.txt", "/MyOpenGL/GLSL/Texture_FragmentShader.txt");
+	Shader ourShader("/MyOpenGL/GLSL/Transform_Vert.txt", "/MyOpenGL/GLSL/Transform_Frag.txt");
 
 	float vertices[] = {
-		//     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
-			 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
-			 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
-			-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
-			-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
+		//     ---- 位置 ----        - 纹理坐标 -
+			 0.5f,  0.5f, 0.0f,      1.0f, 1.0f,   // 右上
+			 0.5f, -0.5f, 0.0f,      1.0f, 0.0f,   // 右下
+			-0.5f, -0.5f, 0.0f,      0.0f, 0.0f,   // 左下
+			-0.5f,  0.5f, 0.0f,      0.0f, 1.0f    // 左上
 	};
 
 	unsigned int indices[] = { // 注意索引从0开始!
@@ -50,7 +52,7 @@ int main()
 			1, 2, 3  // 第二个三角形
 	};
 
-	unsigned int VAO,VBO,EBO;
+	unsigned int VAO, VBO, EBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
@@ -61,12 +63,10 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
 
 
 	unsigned int texture1, texture2;
@@ -115,6 +115,12 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
+
+		glm::mat4 trans;
+		trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
+		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+		unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
 		glBindVertexArray(VAO);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
